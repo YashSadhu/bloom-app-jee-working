@@ -18,6 +18,13 @@ import { useRouter } from 'expo-router';
 
 const { width, height } = Dimensions.get('window');
 
+/**
+ * Renders the main landing page for the JEE exam preparation app, featuring hero content, trust indicators, testimonials, feature highlights, and multiple call-to-action sections.
+ *
+ * The page is scrollable and includes interactive elements with haptic feedback on supported platforms. Navigation to the test creation flow is triggered by various call-to-action buttons and feature cards.
+ *
+ * @returns The landing page React element.
+ */
 export default function Index() {
   const router = useRouter();
 
