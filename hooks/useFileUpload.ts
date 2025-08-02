@@ -66,7 +66,16 @@ export const useFileUpload = (
         if (Array.isArray(parsedSolutions) && parsedSolutions.length > 0) {
           const solutionMap: SolutionKey = {};
           parsedSolutions.forEach((sol: Solution) => {
-            solutionMap[sol.questionNumber.toString()] = sol;
+            if (
+              sol &&
+              typeof sol.questionNumber === 'number' &&
+              Number.isFinite(sol.questionNumber)
+            ) {
+              solutionMap[sol.questionNumber.toString()] = sol;
+            } else {
+              // Optionally log or handle invalid entries
+              // console.warn('Invalid solution entry:', sol);
+            }
           });
           setSolutions(solutionMap);
           Alert.alert('Success', `${parsedSolutions.length} solutions loaded successfully!`);
