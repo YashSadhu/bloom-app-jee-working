@@ -9,6 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { FeatureCard } from './FeatureCard';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -19,16 +20,9 @@ const { width, height } = Dimensions.get('window');
 export default function Index() {
   const router = useRouter();
 
-  const handleGetStarted = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    }
-    router.push('/test');
-  };
-
-  const handleFeaturePress = () => {
-    if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  const handleNavigation = (hapticStyle: Haptics.ImpactFeedbackStyle | undefined) => {
+    if (Platform.OS !== 'web' && hapticStyle) {
+      Haptics.impactAsync(hapticStyle);
     }
     router.push('/test');
   };
@@ -60,7 +54,7 @@ export default function Index() {
               
               <TouchableOpacity
                 style={styles.ctaButton}
-                onPress={handleGetStarted}
+                onPress={() => handleNavigation(Haptics.ImpactFeedbackStyle.Medium)}
                 activeOpacity={0.8}
               >
                 <LinearGradient
@@ -81,63 +75,39 @@ export default function Index() {
               Everything a JEE Genius Needs
             </Text>
             <View style={styles.featuresGrid}>
-              {/* Topic Generation Card */}
-              <TouchableOpacity
-                style={styles.featureCard}
-                onPress={handleFeaturePress}
-                activeOpacity={0.9}
-              >
-                <BlurView intensity={20} style={styles.glassCard}>
-                  <LinearGradient
-                    colors={['#f8fafc', '#e0e7ff']}
-                    style={styles.cardGradient}
-                  >
-                    <View style={[styles.cardIcon, { backgroundColor: '#e0e7ff' }]}> 
-                      <Text style={[styles.iconText, { color: '#3b3b3b' }]}>🎯</Text>
-                    </View>
-                    <Text style={[styles.cardTitle, { color: '#2d3748' }]}>Smart Topic Generator</Text>
-                    <Text style={[styles.cardDescription, { color: '#4a5568' }]}>Generate any JEE topic or subtopic instantly. From basic concepts to advanced problems.</Text>
-                  </LinearGradient>
-                </BlurView>
-              </TouchableOpacity>
-              {/* Precise Solutions Card */}
-              <TouchableOpacity
-                style={styles.featureCard}
-                onPress={handleFeaturePress}
-                activeOpacity={0.9}
-              >
-                <BlurView intensity={20} style={styles.glassCard}>
-                  <LinearGradient
-                    colors={['#fffbe6', '#f8fafc']}
-                    style={styles.cardGradient}
-                  >
-                    <View style={[styles.cardIcon, { backgroundColor: '#fffbe6' }]}> 
-                      <Text style={[styles.iconText, { color: '#3b3b3b' }]}>⚡</Text>
-                    </View>
-                    <Text style={[styles.cardTitle, { color: '#2d3748' }]}>Precise Solutions</Text>
-                    <Text style={[styles.cardDescription, { color: '#4a5568' }]}>Get step-by-step solutions that actually make sense. No more confusion, just clarity.</Text>
-                  </LinearGradient>
-                </BlurView>
-              </TouchableOpacity>
-              {/* Doubt Support Card */}
-              <TouchableOpacity
-                style={styles.featureCard}
-                onPress={handleFeaturePress}
-                activeOpacity={0.9}
-              >
-                <BlurView intensity={20} style={styles.glassCard}>
-                  <LinearGradient
-                    colors={['#f0fff0', '#f8fafc']}
-                    style={styles.cardGradient}
-                  >
-                    <View style={[styles.cardIcon, { backgroundColor: '#f0fff0' }]}> 
-                      <Text style={[styles.iconText, { color: '#3b3b3b' }]}>🧠</Text>
-                    </View>
-                    <Text style={[styles.cardTitle, { color: '#2d3748' }]}>Instant Doubt Clearing</Text>
-                    <Text style={[styles.cardDescription, { color: '#4a5568' }]}>Stuck on a concept? Get your doubts cleared instantly. Your personal JEE mentor.</Text>
-                  </LinearGradient>
-                </BlurView>
-              </TouchableOpacity>
+              {[
+                {
+                  icon: '🎯',
+                  title: 'Smart Topic Generator',
+                  description: 'Generate any JEE topic or subtopic instantly. From basic concepts to advanced problems.',
+                  gradientColors: ['#f8fafc', '#e0e7ff'],
+                  iconBackgroundColor: '#e0e7ff',
+                },
+                {
+                  icon: '⚡',
+                  title: 'Precise Solutions',
+                  description: 'Get step-by-step solutions that actually make sense. No more confusion, just clarity.',
+                  gradientColors: ['#fffbe6', '#f8fafc'],
+                  iconBackgroundColor: '#fffbe6',
+                },
+                {
+                  icon: '🧠',
+                  title: 'Instant Doubt Clearing',
+                  description: 'Stuck on a concept? Get your doubts cleared instantly. Your personal JEE mentor.',
+                  gradientColors: ['#f0fff0', '#f8fafc'],
+                  iconBackgroundColor: '#f0fff0',
+                },
+              ].map((feature, idx) => (
+                <FeatureCard
+                  key={feature.title}
+                  icon={feature.icon}
+                  title={feature.title}
+                  description={feature.description}
+                  gradientColors={feature.gradientColors as [string, string]}
+                  iconBackgroundColor={feature.iconBackgroundColor}
+                  onPress={() => handleNavigation(Haptics.ImpactFeedbackStyle.Light)}
+                />
+              ))}
             </View>
           </View>
 
@@ -211,7 +181,7 @@ export default function Index() {
           <View style={styles.bottomCTA}>
             <TouchableOpacity
               style={styles.secondaryButton}
-              onPress={handleGetStarted}
+              onPress={() => handleNavigation(Haptics.ImpactFeedbackStyle.Medium)}
               activeOpacity={0.8}
             >
               <BlurView intensity={20} style={styles.secondaryButtonBlur}>

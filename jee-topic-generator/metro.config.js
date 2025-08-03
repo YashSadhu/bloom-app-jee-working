@@ -19,6 +19,5 @@ module.exports = {
   },
   watcher: {
     ...defaultConfig.watcher,
-    unstable_lazySha1: true, // Enable lazy SHA1 computation for better performance
   }
 };

@@ -100,8 +100,22 @@ export default function TestEnvironment() {
         const parsedQuestions = JSON.parse(jsonData);
         
         if (Array.isArray(parsedQuestions) && parsedQuestions.length > 0) {
-          setQuestions(parsedQuestions);
-          Alert.alert('Success', `${parsedQuestions.length} questions loaded successfully!`);
+          const isValidQuestion = (q: any) =>
+            typeof q.question === 'string' &&
+            typeof q.optionA === 'string' &&
+            typeof q.optionB === 'string' &&
+            typeof q.optionC === 'string' &&
+            typeof q.optionD === 'string' &&
+            typeof q.subject === 'string' &&
+            typeof q.topic === 'string';
+
+          const validQuestions = parsedQuestions.filter(isValidQuestion);
+          if (validQuestions.length === parsedQuestions.length) {
+            setQuestions(validQuestions);
+            Alert.alert('Success', `${validQuestions.length} questions loaded successfully!`);
+          } else {
+            Alert.alert('Error', 'Some questions are missing required fields or have invalid types. Please check your file.');
+          }
         } else {
           Alert.alert('Error', 'Invalid question format');
         }
@@ -122,9 +136,18 @@ export default function TestEnvironment() {
         const response = await fetch(result.assets[0].uri);
         const jsonData = await response.text();
         const parsedAnswers = JSON.parse(jsonData);
-        
-        setAnswerKey(parsedAnswers);
-        Alert.alert('Success', 'Answer key loaded successfully!');
+        // Validate answer key: must be object, keys must match question numbers, values must be 'A'-'D'
+        const isValidKey =
+          typeof parsedAnswers === 'object' &&
+          Object.values(parsedAnswers).every(
+            v => ['A', 'B', 'C', 'D'].includes(String(v))
+          );
+        if (isValidKey) {
+          setAnswerKey(parsedAnswers);
+          Alert.alert('Success', 'Answer key loaded successfully!');
+        } else {
+          Alert.alert('Error', 'Answer key format invalid. Keys must be question numbers, values must be A/B/C/D.');
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Failed to load answer key.');
@@ -142,8 +165,13 @@ export default function TestEnvironment() {
         const response = await fetch(result.assets[0].uri);
         const jsonData = await response.text();
         const parsedSolutions = JSON.parse(jsonData);
-        
-        if (Array.isArray(parsedSolutions) && parsedSolutions.length > 0) {
+        // Validate solutions: must be array, each item must have required fields
+        const isValidSolution = (sol: any) =>
+          typeof sol.questionNumber === 'number' &&
+          typeof sol.detailedSolution === 'string' &&
+          typeof sol.correctOption === 'string' &&
+          typeof sol.finalAnswer === 'string';
+        if (Array.isArray(parsedSolutions) && parsedSolutions.length > 0 && parsedSolutions.every(isValidSolution)) {
           const solutionMap: SolutionKey = {};
           parsedSolutions.forEach((sol: Solution) => {
             solutionMap[sol.questionNumber.toString()] = sol;
@@ -151,7 +179,7 @@ export default function TestEnvironment() {
           setSolutions(solutionMap);
           Alert.alert('Success', `${parsedSolutions.length} solutions loaded successfully!`);
         } else {
-          Alert.alert('Error', 'Invalid solution format');
+          Alert.alert('Error', 'Invalid solution format. Each solution must have questionNumber, detailedSolution, correctOption, finalAnswer.');
         }
       }
     } catch (error) {
@@ -595,7 +623,6 @@ export default function TestEnvironment() {
             const qNum = questions[index].questionNumber.toString();
             const isAnswered = userAnswers[qNum];
             const isCurrent = index === currentQuestion;
-            
             return (
               <TouchableOpacity
                 key={index}
@@ -605,6 +632,9 @@ export default function TestEnvironment() {
                   isAnswered && styles.navButtonAnswered,
                 ]}
                 onPress={() => jumpToQuestion(index)}
+                accessibilityLabel={`Go to question ${index + 1}${isAnswered ? ', answered' : ''}${isCurrent ? ', current' : ''}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isCurrent, disabled: false }}
               >
                 <Text style={[
                   styles.navButtonText,
@@ -619,49 +649,79 @@ export default function TestEnvironment() {
 
         {/* Question Content */}
         <ScrollView
-  style={styles.contentArea}
-  contentContainerStyle={styles.contentContainer}
-  showsVerticalScrollIndicator={false}
->
-  <View style={styles.questionCard}>
-              <View style={styles.questionHeader}>
-                <Text style={styles.subjectTag}>{currentQ.subject}</Text>
-                <Text style={styles.topicTag}>{currentQ.topic}</Text>
-              </View>
-              
-              <Text style={styles.questionText}>{currentQ.question}</Text>
-
-              {/* Options */}
-              {['A', 'B', 'C', 'D'].map(option => {
-                const optionKey = `option${option}` as keyof Question;
-                const isSelected = selectedAnswer === option;
-                const isCorrect = testCompleted && correctAnswer === option;
-                const isWrong = testCompleted && selectedAnswer === option && correctAnswer !== option;
-
-                return (
-                  <TouchableOpacity
-                    key={option}
-                    style={[
-                      styles.optionButton,
-                      isSelected && styles.optionSelected,
-                      isCorrect && styles.optionCorrect,
-                      isWrong && styles.optionWrong,
-                    ]}
-                    onPress={() => !testCompleted && !showReview && selectAnswer(option)}
-                    disabled={testCompleted || showReview}
-                  >
-                    <Text style={styles.optionLabel}>{option}.</Text>
-                    <Text style={[
-                      styles.optionText,
-                      isSelected && styles.optionTextSelected
-                    ]}>
-                      {currentQ[optionKey]}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
+          style={styles.contentArea}
+          contentContainerStyle={styles.contentContainer}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.questionCard}>
+            <View style={styles.questionHeader}>
+              <Text style={styles.subjectTag}>{currentQ.subject}</Text>
+              <Text style={styles.topicTag}>{currentQ.topic}</Text>
             </View>
-          </ScrollView>
+            <Text style={styles.questionText}>{currentQ.question}</Text>
+            {/* Options */}
+            {['A', 'B', 'C', 'D'].map(option => {
+              const optionKey = `option${option}` as keyof Question;
+              const isSelected = selectedAnswer === option;
+              const isCorrect = testCompleted && correctAnswer === option;
+              const isWrong = testCompleted && selectedAnswer === option && correctAnswer !== option;
+              return (
+                <TouchableOpacity
+                  key={option}
+                  style={[
+                    styles.optionButton,
+                    isSelected && styles.optionSelected,
+                    isCorrect && styles.optionCorrect,
+                    isWrong && styles.optionWrong,
+                  ]}
+                  onPress={() => !testCompleted && !showReview && selectAnswer(option)}
+                  disabled={testCompleted || showReview}
+                  accessibilityLabel={`Select option ${option}: ${currentQ[optionKey]}`}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: isSelected, disabled: testCompleted || showReview }}
+                >
+                  <Text style={styles.optionLabel}>{option}.</Text>
+                  <Text style={[
+                    styles.optionText,
+                    isSelected && styles.optionTextSelected
+                  ]}>
+                    {currentQ[optionKey]}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </ScrollView>
+
+        {/* Navigation Footer */}
+        <View style={styles.footer}>
+          <View style={styles.footerContent}>
+            <TouchableOpacity
+              style={[styles.navFooterButton, currentQuestion === 0 && styles.navButtonDisabled]}
+              onPress={() => navigateQuestion('prev')}
+              disabled={currentQuestion === 0}
+            >
+              <Text style={styles.navFooterButtonText}>Previous</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.navFooterButton, currentQuestion === questions.length - 1 && styles.navButtonDisabled]}
+              onPress={() => navigateQuestion('next')}
+              disabled={currentQuestion === questions.length - 1}
+            >
+              <Text style={styles.navFooterButtonText}>Next</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.submitButton}
+              onPress={submitTest}
+              disabled={testCompleted}
+            >
+              <Text style={styles.submitButtonText}>Submit Test</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </SafeAreaView>
+  );
 
         {/* Navigation Footer */}
         <View style={styles.footer}>
@@ -685,24 +745,30 @@ export default function TestEnvironment() {
               >
                 <Text style={styles.analysisButtonText}>Back to Analysis</Text>
               </TouchableOpacity>
-            ) : (
+            const qNum = questions[index].questionNumber.toString();
+            const isAnswered = userAnswers[qNum];
+            const isCurrent = index === currentQuestion;
+            return (
               <TouchableOpacity
-                style={styles.submitButton}
-                onPress={submitTest}
-                activeOpacity={0.8}
+                key={index}
+                style={[
+                  styles.navButton,
+                  isCurrent && styles.navButtonActive,
+                  isAnswered && styles.navButtonAnswered,
+                ]}
+                onPress={() => jumpToQuestion(index)}
+                accessibilityLabel={`Go to question ${index + 1}${isAnswered ? ', answered' : ''}${isCurrent ? ', current' : ''}`}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isCurrent, disabled: false }}
               >
-                <Text style={styles.submitButtonText}>Submit Test</Text>
+                <Text style={[
+                  styles.navButtonText,
+                  isCurrent && styles.navButtonTextActive
+                ]}>
+                  {index + 1}
+                </Text>
               </TouchableOpacity>
-            )}
-
-            <TouchableOpacity
-              style={[
-                styles.navFooterButton,
-                currentQuestion === questions.length - 1 && styles.navButtonDisabled
-              ]}
-              onPress={() => navigateQuestion('next')}
-              disabled={currentQuestion === questions.length - 1}
-            >
+            );
               <Text style={styles.navFooterButtonText}>Next</Text>
             </TouchableOpacity>
           </View>
@@ -713,6 +779,16 @@ export default function TestEnvironment() {
 }
 
 const styles = StyleSheet.create({
+  contentArea: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingTop: 0,
+  },
+  contentContainer: {
+    paddingBottom: 32,
+    paddingTop: 0,
+  },
   container: {
     flex: 1,
   },
