@@ -1,4 +1,5 @@
 import React from 'react';
+import { Image } from 'react-native';
 import {
   Text,
   View,
@@ -37,7 +38,11 @@ export default function Index() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.backgroundContainer}>
-        <View style={styles.grainOverlay} />
+        <Image
+          source={require('../../assets/images/grain.png')}
+          style={styles.grainOverlay}
+          resizeMode="repeat"
+        />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -243,13 +248,8 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'transparent',
     opacity: 0.03,
-    // Add a subtle grain texture effect
-    shadowColor: '#000000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.1,
-    shadowRadius: 1,
+    // Subtle grain texture effect using image
   },
   scrollView: {
     flex: 1,
