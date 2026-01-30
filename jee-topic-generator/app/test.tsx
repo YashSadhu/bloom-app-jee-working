@@ -44,6 +44,13 @@ interface SolutionKey {
   [key: string]: Solution;
 }
 
+/**
+ * Provides a full-featured, interactive JEE-style multiple-choice test environment in React Native.
+ *
+ * Users can upload question sets, answer keys, and solutions in JSON format, take a timed test, submit answers, and review detailed analysis and solutions. The component manages test state, timing, answer selection, navigation, and result calculation, supporting multiple screens for uploading, starting, testing, analysis, review, and solution viewing. It offers subject-wise performance breakdown, haptic feedback, and robust error handling for file uploads and user actions.
+ *
+ * @returns The rendered React Native component for the test environment.
+ */
 export default function TestEnvironment() {
   const [questions, setQuestions] = useState<Question[]>([]);
   const [answerKey, setAnswerKey] = useState<AnswerKey>({});
